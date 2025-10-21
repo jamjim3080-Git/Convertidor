@@ -227,7 +227,8 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            installPrompt.classList.add('show');
+            // El prompt solo se muestra si el navegador lo permite
+            installPrompt.classList.add('show'); 
         });
 
         installBtn.addEventListener('click', async () => {
@@ -257,14 +258,14 @@
         // Cargar valores guardados del localStorage
         window.addEventListener('load', () => {
             try {
-                // ✅ IMPORTANTE: Cargamos los valores guardados
+                // ✅ LÓGICA DE CARGA MEJORADA
                 const savedTasaCOP = localStorage.getItem('tasaCOP');
                 const savedTasaBCV = localStorage.getItem('tasaBCV');
                 const savedPesos = localStorage.getItem('pesos');
                 const savedBS = localStorage.getItem('bs');
                 const savedBCV = localStorage.getItem('bcv');
 
-                // Si hay valores guardados, los asignamos a los inputs
+                // Aplicar valores guardados solo si existen
                 if (savedTasaCOP) tasaCOPInput.value = savedTasaCOP;
                 if (savedTasaBCV) tasaBCVInput.value = savedTasaBCV;
                 if (savedPesos) pesosInput.value = savedPesos;
@@ -272,9 +273,10 @@
                 if (savedBCV) bcvInput.value = savedBCV;
 
             } catch (e) {
-                console.log('localStorage no disponible');
+                console.error('Error al cargar datos de localStorage', e);
             }
 
+            // Realiza el cálculo inicial con los valores cargados/por defecto
             calcular();
         });
 
@@ -286,7 +288,7 @@
             });
         }
 
-        // Función de cálculo bidireccional
+        // Función de cálculo bidireccional y persistencia
         function calcular(e) {
             // 1. Determinar la fuente de la edición
             let source = 'cop';
@@ -294,8 +296,8 @@
                 source = e.target.dataset.currency;
             }
 
-            // 2. Obtener tasas y valores iniciales
-            // Las tasas se obtienen directamente del valor actual del input (editado o cargado)
+            // 2. Obtener tasas y valores iniciales (leídos directamente del input)
+            // Usamos || 1 para evitar divisiones por cero si el campo está vacío temporalmente
             const tasaCOP = parseFloat(tasaCOPInput.value) || 1;
             const tasaBCV = parseFloat(tasaBCVInput.value) || 1;
 
@@ -307,38 +309,46 @@
             switch (source) {
                 case 'bs':
                     // Si se editó Bolívares (BS)
-                    pesos = bs * tasaCOP;         // BS -> COP
-                    bcv = bs / tasaBCV;           // BS -> BCV
+                    pesos = bs * tasaCOP;
+                    bcv = bs / tasaBCV;
                     break;
 
                 case 'bcv':
                     // Si se editó Dólares BCV ($ BCV)
-                    bs = bcv * tasaBCV;           // BCV -> BS
-                    pesos = bs * tasaCOP;         // BS -> COP
+                    bs = bcv * tasaBCV;
+                    pesos = bs * tasaCOP;
                     break;
                 
                 case 'cop':
                 default:
                     // Si se editó Pesos (COP) - Lógica original
-                    bs = pesos / tasaCOP;         // COP -> BS
-                    bcv = bs / tasaBCV;           // BS -> BCV
+                    bs = pesos / tasaCOP;
+                    bcv = bs / tasaBCV;
                     break;
             }
 
-            // 4. Actualizar la Interfaz (todos los campos)
+            // 4. Actualizar la Interfaz
+            // Siempre actualizamos todos los campos, usando .toFixed() para la precisión visual
             pesosInput.value = pesos.toFixed(0);
             bsInput.value = bs.toFixed(2);
             bcvInput.value = bcv.toFixed(2);
             
+            // Actualizar la zona informativa de tasas
             displayTasaCOP.textContent = formatNumber(tasaCOP, 2);
             displayTasaBCV.textContent = formatNumber(tasaBCV, 2);
 
-            // 5. Guardar valores - ✅ CORRECCIÓN
-            // Guardamos el valor actual del input (string) para que se preserve exactamente lo que el usuario escribió en las tasas.
-            localStorage.setItem('tasaCOP', tasaCOPInput.value);
-            localStorage.setItem('tasaBCV', tasaBCVInput.value);
+            // 5. Guardar valores - ✅ LÓGICA DE PERSISTENCIA MÁS ROBUSTA
             
-            // También guardamos los valores de conversión (actualizados)
+            // Guardamos las tasas directamente como string si no están vacías, para preservar
+            // exactamente lo que el usuario escribió (esto soluciona el problema de persistencia)
+            if (tasaCOPInput.value !== "") {
+                localStorage.setItem('tasaCOP', tasaCOPInput.value);
+            }
+            if (tasaBCVInput.value !== "") {
+                localStorage.setItem('tasaBCV', tasaBCVInput.value);
+            }
+            
+            // Guardamos los valores de conversión actualizados
             localStorage.setItem('pesos', pesos.toFixed(0));
             localStorage.setItem('bs', bs.toFixed(2));
             localStorage.setItem('bcv', bcv.toFixed(2));
@@ -349,6 +359,7 @@
 
         // Función para compartir
         async function compartir() {
+            // Llama a calcular para obtener los valores más recientes y guardarlos
             const { pesos, bs, bcv, tasaCOP, tasaBCV } = calcular();
             
             shareBtnText.textContent = 'Compartiendo...';
@@ -380,7 +391,7 @@
                 }
             } catch (error) {
                 if (error.name !== 'AbortError') {
-                    alert(shareText);
+                    alert(error.message);
                 }
             }
 
@@ -397,8 +408,8 @@
 
         shareBtn.addEventListener('click', compartir);
 
-        // Cálculo inicial
-        calcular();
+        // Cálculo inicial (se llama en window.load, pero lo dejo aquí también por si acaso)
+        // calcular(); 
     </script>
 </body>
 </html>
