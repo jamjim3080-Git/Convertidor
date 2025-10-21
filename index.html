@@ -296,13 +296,14 @@
             return { pesos, bs, bcv, tasaCOP, tasaBCV };
         }
 // Función para compartir
-        async function compartir() {
-            const { pesos, bs, bcv, tasaCOP, tasaBCV } = calcular();
-            
-            shareBtnText.textContent = 'Compartiendo...';
-            shareBtn.disabled = true;
+     async function compartir() {
+    const { pesos, bs, bcv, tasaCOP, tasaBCV } = calcular();
+    
+    shareBtnText.textContent = 'Compartiendo...';
+    shareBtn.disabled = true;
 
-            const shareText = 💱 Conversión de Divisas 🇨🇴🇻🇪
+    // ¡Asegúrate de agregar las comillas invertidas aquí! (`)
+    const shareText = `💱 Conversión de Divisas 🇨🇴🇻🇪
 
 💵 ${formatNumber(pesos, 0)} COP
     ↓
@@ -312,7 +313,7 @@
 
 📊 Tasas de Cambio:
 • COP = BS: ${tasaCOP}
-• Dólar BCV: ${tasaBCV};
+• Dólar BCV: ${tasaBCV}`;
 
             try {
                 if (navigator.share) {
@@ -347,3 +348,4 @@
     </script>
 </body>
 </html>
+
