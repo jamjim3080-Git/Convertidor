@@ -243,12 +243,12 @@
             installPrompt.classList.remove('show');
         });
 
-        // Referencias a elementos - ACTUALIZADAS
+        // Referencias a elementos
         const tasaCOPInput = document.getElementById('tasaCOP');
         const tasaBCVInput = document.getElementById('tasaBCV');
-        const pesosInput = document.getElementById('pesosInput'); // ID actualizado de 'pesos' a 'pesosInput' para consistencia
-        const bsInput = document.getElementById('bsInput');       // Antes era resultBSDiv
-        const bcvInput = document.getElementById('bcvInput');     // Antes era resultBCVDiv
+        const pesosInput = document.getElementById('pesosInput');
+        const bsInput = document.getElementById('bsInput');
+        const bcvInput = document.getElementById('bcvInput');
         const displayTasaCOP = document.getElementById('displayTasaCOP');
         const displayTasaBCV = document.getElementById('displayTasaBCV');
         const shareBtn = document.getElementById('shareBtn');
@@ -257,18 +257,19 @@
         // Cargar valores guardados del localStorage
         window.addEventListener('load', () => {
             try {
+                // ✅ IMPORTANTE: Cargamos los valores guardados
                 const savedTasaCOP = localStorage.getItem('tasaCOP');
                 const savedTasaBCV = localStorage.getItem('tasaBCV');
                 const savedPesos = localStorage.getItem('pesos');
-                const savedBS = localStorage.getItem('bs');       // Nuevo
-                const savedBCV = localStorage.getItem('bcv');     // Nuevo
+                const savedBS = localStorage.getItem('bs');
+                const savedBCV = localStorage.getItem('bcv');
 
+                // Si hay valores guardados, los asignamos a los inputs
                 if (savedTasaCOP) tasaCOPInput.value = savedTasaCOP;
                 if (savedTasaBCV) tasaBCVInput.value = savedTasaBCV;
-                // Cargamos solo un valor de divisa inicial para evitar conflictos
                 if (savedPesos) pesosInput.value = savedPesos;
-                else if (savedBS) bsInput.value = savedBS;
-                else if (savedBCV) bcvInput.value = savedBCV;
+                if (savedBS) bsInput.value = savedBS;
+                if (savedBCV) bcvInput.value = savedBCV;
 
             } catch (e) {
                 console.log('localStorage no disponible');
@@ -279,14 +280,13 @@
 
         // Función para formatear números
         function formatNumber(num, decimals = 2) {
-            // Asegura que el número se formatee con el separador de miles correcto (ej: 10.000,00)
             return num.toLocaleString('es-ES', {
                 minimumFractionDigits: decimals,
                 maximumFractionDigits: decimals
             });
         }
 
-        // Función de cálculo bidireccional - REESCRITA
+        // Función de cálculo bidireccional
         function calcular(e) {
             // 1. Determinar la fuente de la edición
             let source = 'cop';
@@ -295,6 +295,7 @@
             }
 
             // 2. Obtener tasas y valores iniciales
+            // Las tasas se obtienen directamente del valor actual del input (editado o cargado)
             const tasaCOP = parseFloat(tasaCOPInput.value) || 1;
             const tasaBCV = parseFloat(tasaBCVInput.value) || 1;
 
@@ -325,8 +326,6 @@
             }
 
             // 4. Actualizar la Interfaz (todos los campos)
-            // Usamos .toFixed(n) antes de asignarlo al value, para mantener la precisión
-            // La función formatNumber se usará solo para el texto de compartir.
             pesosInput.value = pesos.toFixed(0);
             bsInput.value = bs.toFixed(2);
             bcvInput.value = bcv.toFixed(2);
@@ -334,9 +333,12 @@
             displayTasaCOP.textContent = formatNumber(tasaCOP, 2);
             displayTasaBCV.textContent = formatNumber(tasaBCV, 2);
 
-            // 5. Guardar valores
-            localStorage.setItem('tasaCOP', tasaCOP);
-            localStorage.setItem('tasaBCV', tasaBCV);
+            // 5. Guardar valores - ✅ CORRECCIÓN
+            // Guardamos el valor actual del input (string) para que se preserve exactamente lo que el usuario escribió en las tasas.
+            localStorage.setItem('tasaCOP', tasaCOPInput.value);
+            localStorage.setItem('tasaBCV', tasaBCVInput.value);
+            
+            // También guardamos los valores de conversión (actualizados)
             localStorage.setItem('pesos', pesos.toFixed(0));
             localStorage.setItem('bs', bs.toFixed(2));
             localStorage.setItem('bcv', bcv.toFixed(2));
@@ -345,14 +347,13 @@
             return { pesos, bs, bcv, tasaCOP, tasaBCV };
         }
 
-        // Función para compartir - CORREGIDA
+        // Función para compartir
         async function compartir() {
             const { pesos, bs, bcv, tasaCOP, tasaBCV } = calcular();
             
             shareBtnText.textContent = 'Compartiendo...';
             shareBtn.disabled = true;
 
-            // Uso de comillas invertidas (template literal)
             const shareText = `💱 Conversión de Divisas 🇨🇴🇻🇪
 
 💵 ${formatNumber(pesos, 0)} COP
@@ -387,12 +388,10 @@
             shareBtn.disabled = false;
         }
 
-        // Event listeners - ACTUALIZADOS
+        // Event listeners
         tasaCOPInput.addEventListener('input', calcular);
         tasaBCVInput.addEventListener('input', calcular);
         pesosInput.addEventListener('input', calcular);
-
-        // NUEVOS listeners para la conversión bidireccional
         bsInput.addEventListener('input', calcular);
         bcvInput.addEventListener('input', calcular);
 
